@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Viral Clip Cloner — Flow AI Script Generator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #f0f0f0;
+    --text2: #888;
+    --text3: #555;
+    --accent: #e8ff47;
+    --accent-dim: rgba(232,255,71,0.1);
+    --accent-border: rgba(232,255,71,0.3);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.1);
+    --blue-border: rgba(59,130,246,0.3);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.1);
+    --amber-border: rgba(245,158,11,0.3);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.1);
+    --green-border: rgba(34,197,94,0.3);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.08);
+    --red-border: rgba(239,68,68,0.3);
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 2.5rem;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; background: var(--accent);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text { font-size: 18px; font-weight: 600; color: var(--text); }
+  .logo-badge {
+    font-size: 11px; background: var(--accent-dim); border: 1px solid var(--accent-border);
+    color: var(--accent); padding: 2px 8px; border-radius: 20px; margin-left: 4px;
+  }
+
+  .section { margin-bottom: 1rem; }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 10px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text2);
+    margin-bottom: 8px;
+  }
+
+  input[type=text], textarea, select {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: inherit;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  input[type=text]:focus, textarea:focus, select:focus {
+    border-color: var(--border2);
+  }
+  textarea { resize: vertical; line-height: 1.6; }
+  select option { background: var(--bg3); }
+
+  .note {
+    font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.5;
+  }
+
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .row3 .field label { margin-bottom: 6px; }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0.01em;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 4px;
+  }
+  .btn:hover { opacity: 0.9; }
+  .btn:active { transform: scale(0.99); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+  .loading {
+    display: none; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-top: 10px;
+  }
+  .loading.on { display: flex; }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: var(--text2); }
+
+  .error {
+    display: none; padding: 12px 16px;
+    background: var(--red-dim); border: 1px solid var(--red-border);
+    border-radius: var(--radius); margin-top: 10px;
+    font-size: 13px; color: var(--red);
+  }
+
+  .output { display: none; margin-top: 2rem; }
+  .output.on { display: block; }
+
+  .sec-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text3);
+    margin: 2rem 0 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .sec-label::before {
+    content: ''; display: block; width: 16px; height: 1px; background: var(--border2);
+  }
+
+  .hook-box {
+    background: var(--accent-dim); border: 1px solid var(--accent-border);
+    border-radius: var(--radius); padding: 1.25rem;
+  }
+  .hook-box p { font-size: 15px; font-weight: 600; color: var(--accent); line-height: 1.5; }
+
+  .cta-box {
+    background: var(--green-dim); border: 1px solid var(--green-border);
+    border-radius: var(--radius); padding: 1.25rem;
+  }
+  .cta-box p { font-size: 14px; color: var(--green); line-height: 1.6; }
+
+  .clip-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+
+  .clip-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .clip-n {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #000;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .clip-tipo { font-size: 13px; font-weight: 600; color: var(--text); }
+  .clip-dur {
+    margin-left: auto; font-size: 12px; color: var(--text2);
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 2px 10px;
+  }
+
+  .clip-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+  .prompt-block {
+    border-radius: var(--radius-sm); padding: 12px 14px; position: relative;
+  }
+  .pb-audio { background: var(--bg3); border: 1px solid var(--border); }
+  .pb-img { background: var(--amber-dim); border: 1px solid var(--amber-border); }
+  .pb-vid { background: var(--blue-dim); border: 1px solid var(--blue-border); }
+  .pb-trans { background: var(--bg3); border: 1px solid var(--border); }
+
+  .pb-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; margin-bottom: 7px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .pb-audio .pb-label { color: var(--text2); }
+  .pb-img .pb-label { color: var(--amber); }
+  .pb-vid .pb-label { color: var(--blue); }
+  .pb-trans .pb-label { color: var(--text3); }
+
+  .pb-text { font-size: 12.5px; line-height: 1.7; color: var(--text); }
+
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    font-size: 11px; color: var(--text2);
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 3px 10px;
+    cursor: pointer; font-family: inherit;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--border2); }
+
+  .tips-box {
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem;
+  }
+  .tip { display: flex; gap: 10px; margin-bottom: 8px; font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .tip:last-child { margin-bottom: 0; }
+  .tip-dot { color: var(--accent); font-weight: 700; flex-shrink: 0; }
+
+  .copy-all {
+    width: 100%; margin-top: 1.5rem; padding: 12px;
+    background: transparent; color: var(--text2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius); font-size: 13px;
+    font-family: inherit; cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .copy-all:hover { color: var(--text); border-color: var(--text2); }
+
+  @media (max-width: 480px) {
+    .row3 { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="logo">
+    <div class="logo-icon">🎬</div>
+    <div class="logo-text">Viral Clip Cloner</div>
+    <div class="logo-badge">Flow AI</div>
+  </div>
+
+  <div class="card">
+    <label>Link de TikTok (opcional)</label>
+    <input type="text" id="tiktokUrl" placeholder="https://www.tiktok.com/@usuario/video/..." />
+    <p class="note">La IA no accede a TikTok directamente — describe el video abajo aunque pegues el link</p>
+  </div>
+
+  <div class="card">
+    <label>Describe el video viral clip a clip</label>
+    <textarea id="videoDesc" rows="5" placeholder="Ej: Video de 20s. Empieza con primer plano de la chica mirando a cámara diciendo algo. Luego 3 clips rápidos mostrando el producto en el baño. Acaba con resultado en espejo. Música lo-fi, muchos cortes."></textarea>
+  </div>
+
+  <div class="card">
+    <label>Tu producto y marca (sé específica — describe el packaging)</label>
+    <input type="text" id="product" placeholder="Ej: Sérum vitamina C GlowLab, botella 30ml blanca con gotero dorado, etiqueta minimalista negra, para manchas y luminosidad" />
+  </div>
+
+  <div class="row3">
+    <div class="field">
+      <label>Duración</label>
+      <select id="duration">
+        <option value="10">10 seg</option>
+        <option value="15">15 seg</option>
+        <option value="30" selected>30 seg</option>
+        <option value="60">60 seg</option>
+        <option value="90">90 seg</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Tono</label>
+      <select id="tone">
+        <option value="educativo">Educativo</option>
+        <option value="emocional">Emocional</option>
+        <option value="divertido" selected>Divertido</option>
+        <option value="urgente">Urgente / FOMO</option>
+        <option value="storytelling">Storytelling</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Entorno</label>
+      <select id="location">
+        <option value="bathroom" selected>Baño</option>
+        <option value="bedroom">Habitación</option>
+        <option value="kitchen">Cocina</option>
+        <option value="living room">Salón</option>
+        <option value="outdoor">Exterior</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn" id="genBtn" onclick="generate()">✦ Generar script + prompts Flow AI</button>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <span class="loading-text" id="loadingText">Analizando estructura viral...</span>
+  </div>
+  <div class="error" id="errorBox"></div>
+
+  <div class="output" id="output">
+    <div class="sec-label">Hook de apertura</div>
+    <div class="hook-box"><p id="hookText"></p></div>
+
+    <div class="sec-label">Clips</div>
+    <div id="clipsContainer"></div>
+
+    <div class="sec-label">Call to action</div>
+    <div class="cta-box"><p id="ctaText"></p></div>
+
+    <div class="sec-label">Tips de producción</div>
+    <div class="tips-box" id="tipsBox"></div>
+
+    <button class="copy-all" onclick="copyAll()">↓ Copiar todo el script y prompts</button>
+  </div>
+
+</div>
+
+<script>
+const MSGS = [
+  "Analizando estructura viral...",
+  "Generando prompts de imagen...",
+  "Creando prompts de video Flow AI...",
+  "Optimizando para UGC realista...",
+  "Puliendo los clips..."
+];
+let msgInt, lastData;
+
+async function generate() {
+  const desc = document.getElementById('videoDesc').value.trim();
+  const product = document.getElementById('product').value.trim();
+  const url = document.getElementById('tiktokUrl').value.trim();
+  const duration = document.getElementById('duration').value;
+  const tone = document.getElementById('tone').value;
+  const loc = document.getElementById('location').value;
+
+  if (!desc || !product) { showErr('Rellena la descripción del video y tu producto.'); return; }
+
+  document.getElementById('genBtn').disabled = true;
+  document.getElementById('output').className = 'output';
+  document.getElementById('errorBox').style.display = 'none';
+  document.getElementById('loading').className = 'loading on';
+
+  let mi = 0;
+  msgInt = setInterval(() => {
+    mi = (mi + 1) % MSGS.length;
+    document.getElementById('loadingText').textContent = MSGS[mi];
+  }, 2200);
+
+  const prompt = buildPrompt(desc, product, url, duration, tone, loc);
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    clearInterval(msgInt);
+    document.getElementById('loading').className = 'loading';
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showErr(err.error || 'Error del servidor. Comprueba tu API key en Vercel.');
+      return;
+    }
+
+    const data = await res.json();
+    lastData = data;
+    render(data);
+  } catch(e) {
+    clearInterval(msgInt);
+    document.getElementById('loading').className = 'loading';
+    showErr('Error de conexión. ¿Está el servidor corriendo?');
+  } finally {
+    document.getElementById('genBtn').disabled = false;
+  }
+}
+
+function buildPrompt(desc, product, url, duration, tone, loc) {
+  return `You are an expert TikTok UGC content strategist for a skincare/cosmetics brand. The user found this viral video${url ? ' ('+url+')' : ''} and wants to replicate its exact structure with their own product.
+
+VIDEO DESCRIPTION: "${desc}"
+PRODUCT: "${product}"
+VIDEO DURATION: ${duration} seconds
+TONE: ${tone}
+SETTING: ${loc}
+
+Create a complete clip-by-clip script. For EVERY clip you MUST generate:
+1. An IMAGE PROMPT (first frame, static) — ultra-detailed, professional, optimized for Flow AI image generation
+2. A VIDEO PROMPT (motion from that image) — ultra-detailed, professional, optimized for Flow AI video generation
+
+STRICT RULES for all prompts:
+- Written entirely in English
+- Always feature a Spanish woman aged 20-35, natural Mediterranean features (olive skin, dark brown or black hair, dark eyes), no makeup or minimal natural makeup depending on the clip
+- Always filmed as genuine UGC: handheld iPhone selfie-style, slightly shaky, natural imperfect framing, real home ${loc} environment, authentic lighting (bathroom vanity light, morning window light, etc.), no professional studio setup whatsoever
+- Products must ALWAYS be physically present and clearly visible in every single clip — refer to them as: "the exact same products as seen in the reference image, identical in shape, label, color, and packaging"
+- Never invent product appearances — always defer to reference image
+- Hyper-realistic, cinematic but raw, not polished or commercial-looking
+- Include specific camera angles, movements, lighting conditions, micro-expressions, hand gestures, body language
+- Video prompts must describe motion starting from the exact first frame of the image prompt
+- Each image prompt minimum 100 words. Each video prompt minimum 100 words. Be extremely detailed and specific.
+- Image prompts: describe exact scene composition, subject appearance and clothing, product placement and visibility, lighting source and quality, camera angle and lens feel, environment details, mood, color palette, skin texture, UGC aesthetic markers
+- Video prompts: describe specific camera movement (handheld shake, zoom, pan), subject movement and micro-expressions, how the subject interacts with the product, any lighting changes, the overall motion feel, UGC handheld motion quality
+
+Return ONLY valid JSON, no markdown fences, no explanation, nothing before or after:
+{
+  "hook": "exact hook text in Spanish (what is said or shown in first 1-2 seconds, punchy and viral)",
+  "clips": [
+    {
+      "numero": 1,
+      "duracion": "Xs",
+      "tipo": "clip type description in Spanish",
+      "audio": "exactly what is said or heard in this clip, in Spanish",
+      "transicion": "how to transition to the next clip, in Spanish",
+      "image_prompt": "ULTRA DETAILED 100+ word image prompt in English optimized for Flow AI",
+      "video_prompt": "ULTRA DETAILED 100+ word video prompt in English optimized for Flow AI, starting from the exact first frame described in image_prompt"
+    }
+  ],
+  "cta": "final call to action in Spanish, punchy",
+  "tips": [
+    "production tip 1 in Spanish",
+    "production tip 2 in Spanish",
+    "production tip 3 in Spanish",
+    "production tip 4 in Spanish"
+  ]
+}`;
+}
+
+function render(d) {
+  document.getElementById('hookText').textContent = d.hook || '';
+
+  const cont = document.getElementById('clipsContainer');
+  cont.innerHTML = '';
+  (d.clips || []).forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'clip-card';
+    el.innerHTML = `
+      <div class="clip-head">
+        <div class="clip-n">${c.numero || i+1}</div>
+        <div class="clip-tipo">${c.tipo || 'Clip'}</div>
+        <div class="clip-dur">${c.duracion || ''}</div>
+      </div>
+      <div class="clip-body">
+        <div class="prompt-block pb-audio">
+          <div class="pb-label">🎙 Audio / diálogo</div>
+          <div class="pb-text">${c.audio || ''}</div>
+        </div>
+        <div class="prompt-block pb-img">
+          <button class="copy-btn" onclick="copyTxt(this,'${esc(c.image_prompt)}')">Copiar</button>
+          <div class="pb-label">📸 Image prompt — Flow AI</div>
+          <div class="pb-text">${c.image_prompt || ''}</div>
+        </div>
+        <div class="prompt-block pb-vid">
+          <button class="copy-btn" onclick="copyTxt(this,'${esc(c.video_prompt)}')">Copiar</button>
+          <div class="pb-label">🎬 Video prompt — Flow AI</div>
+          <div class="pb-text">${c.video_prompt || ''}</div>
+        </div>
+        <div class="prompt-block pb-trans">
+          <div class="pb-label">→ Transición</div>
+          <div class="pb-text">${c.transicion || ''}</div>
+        </div>
+      </div>`;
+    cont.appendChild(el);
+  });
+
+  document.getElementById('ctaText').textContent = d.cta || '';
+
+  const tb = document.getElementById('tipsBox');
+  tb.innerHTML = '';
+  (d.tips || []).forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'tip';
+    div.innerHTML = `<span class="tip-dot">✦</span><span>${t}</span>`;
+    tb.appendChild(div);
+  });
+
+  document.getElementById('output').className = 'output on';
+}
+
+function esc(str) {
+  return (str || '').replace(/'/g, "\\'").replace(/\n/g, ' ');
+}
+
+function copyTxt(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  });
+}
+
+function copyAll() {
+  if (!lastData) return;
+  let out = `HOOK:\n${lastData.hook}\n\n`;
+  (lastData.clips || []).forEach((c, i) => {
+    out += `${'='.repeat(50)}\nCLIP ${i+1} (${c.duracion}) — ${c.tipo}\n${'='.repeat(50)}\n`;
+    out += `AUDIO: ${c.audio}\n\n`;
+    out += `IMAGE PROMPT:\n${c.image_prompt}\n\n`;
+    out += `VIDEO PROMPT:\n${c.video_prompt}\n\n`;
+    out += `TRANSICIÓN: ${c.transicion}\n\n`;
+  });
+  out += `CALL TO ACTION:\n${lastData.cta}\n\nTIPS DE PRODUCCIÓN:\n`;
+  (lastData.tips || []).forEach(t => { out += `✦ ${t}\n`; });
+  navigator.clipboard.writeText(out).then(() => {
+    const btn = document.querySelector('.copy-all');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Todo copiado al portapapeles';
+    setTimeout(() => { btn.textContent = orig; }, 2500);
+  });
+}
+
+function showErr(msg) {
+  clearInterval(msgInt);
+  document.getElementById('loading').className = 'loading';
+  const b = document.getElementById('errorBox');
+  b.style.display = 'block';
+  b.textContent = msg;
+  document.getElementById('genBtn').disabled = false;
+}
+</script>
+</body>
+</html>
