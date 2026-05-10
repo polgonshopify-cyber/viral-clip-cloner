@@ -260,12 +260,6 @@
   </div>
 
   <div class="card">
-    <label>Link de TikTok (opcional)</label>
-    <input type="text" id="tiktokUrl" placeholder="https://www.tiktok.com/@usuario/video/..." />
-    <p class="note">La IA no accede a TikTok directamente — describe el video abajo aunque pegues el link</p>
-  </div>
-
-  <div class="card">
     <label>Describe el video viral clip a clip</label>
     <textarea id="videoDesc" rows="5" placeholder="Ej: Video de 20s. Empieza con primer plano de la chica mirando a cámara diciendo algo. Luego 3 clips rápidos mostrando el producto en el baño. Acaba con resultado en espejo. Música lo-fi, muchos cortes."></textarea>
   </div>
@@ -347,7 +341,6 @@ let msgInt, lastData;
 async function generate() {
   const desc = document.getElementById('videoDesc').value.trim();
   const product = document.getElementById('product').value.trim();
-  const url = document.getElementById('tiktokUrl').value.trim();
   const duration = document.getElementById('duration').value;
   const tone = document.getElementById('tone').value;
   const loc = document.getElementById('location').value;
@@ -365,7 +358,7 @@ async function generate() {
     document.getElementById('loadingText').textContent = MSGS[mi];
   }, 2200);
 
-  const prompt = buildPrompt(desc, product, url, duration, tone, loc);
+  const prompt = buildPrompt(desc, product, duration, tone, loc);
 
   try {
     const res = await fetch('/api/generate', {
@@ -395,8 +388,8 @@ async function generate() {
   }
 }
 
-function buildPrompt(desc, product, url, duration, tone, loc) {
-  return `You are an expert TikTok UGC content strategist for a skincare/cosmetics brand. The user found this viral video${url ? ' ('+url+')' : ''} and wants to replicate its exact structure with their own product.
+function buildPrompt(desc, product, duration, tone, loc) {
+  return `You are an expert TikTok UGC content strategist for a skincare/cosmetics brand. The user found a viral video and wants to replicate its exact structure with their own product.
 
 VIDEO DESCRIPTION: "${desc}"
 PRODUCT: "${product}"
